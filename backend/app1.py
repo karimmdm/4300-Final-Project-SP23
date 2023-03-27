@@ -32,7 +32,7 @@ os.environ['ROOT_PATH'] = os.path.abspath(os.path.join("..",os.curdir))
 
 # mysql_engine = MySQLDatabaseHandler(MYSQL_USER,MYSQL_USER_PASSWORD,MYSQL_PORT,MYSQL_DATABASE)
 
-# # Path to init.sql file. This file can be replaced with your own file for testing on localhost, but do NOT move the init.sql file
+# Path to init.sql file. This file can be replaced with your own file for testing on localhost, but do NOT move the init.sql file
 # mysql_engine.load_file_into_db('/Users/jensen615/cs4300/careerfinder/init.sql')
 
 app = Flask(__name__)
@@ -47,6 +47,7 @@ def get_data():
     df = pd.DataFrame()
 
     for file in csv_files:
+        file = os.path.join(os.environ['ROOT_PATH'], file)
         df_temp = pd.read_csv(file)
         df = df.append(df_temp, ignore_index=True)
 
@@ -294,16 +295,16 @@ def top10_results(query):
 
     output = []
     for score, job_id in results:
-        if count == 10:
+        if count == 100:
             break
         count += 1
         
         result = {
             'Score': score,
-            'Job Title': jobs.iloc[job_id]['Job_title'],
+            'JobTitle': jobs.iloc[job_id]['Job_title'],
             'Industry': jobs.iloc[job_id]['Industry'],
-            'Min Salary': jobs.iloc[job_id]['Min_Salary'],
-            'Max Salary': jobs.iloc[job_id]['Min_Salary'],
+            'MinSalary': jobs.iloc[job_id]['Min_Salary'],
+            'MaxSalary': jobs.iloc[job_id]['Min_Salary'],
         }
 
         result = json.dumps(result, default=np_encoder)
@@ -326,10 +327,11 @@ def career_search():
 # Sample search, the LIKE operator in this case is hard-coded, 
 # but if you decide to use SQLAlchemy ORM framework, 
 # there's a much better and cleaner way to do this
-# def sql_search(episode):
-#     query_sql = f"""SELECT * FROM episodes WHERE LOWER( title ) LIKE '%%{episode.lower()}%%' limit 10"""
-#     keys = ["id","title","descr"]
-#     data = mysql_engine.query_selector(query_sql)
-#     return json.dumps([dict(zip(keys,i)) for i in data])
+def sql_search(episode):
+    query_sql = f"""SELECT * FROM episodes WHERE LOWER( title ) LIKE '%%{episode.lower()}%%' limit 10"""
+    keys = ["id","title","descr"]
+    # data = mysql_engine.query_selector(query_sql)
+    # return json.dumps([dict(zip(keys,i)) for i in data])
+    return None
 
 app.run(debug=True)
