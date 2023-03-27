@@ -1,5 +1,6 @@
 import requests
 import os
+import re
 
 def mkdir(path):
     if not os.path.isdir(path):
@@ -75,6 +76,34 @@ def download_knowledge(data_dir):
         with open(knowledge_dir + "{}.csv".format(file_name), 'wb') as f:
             f.write(response.content)
 
+def download_cross_skills(data_dir):
+    cross_skills_dir = data_dir+"cross-skills/"
+    mkdir(cross_skills_dir)
+    skills_url = "https://www.onetonline.org/find/descriptor/browse/2.B/2.B.2/2.B.5/2.B.1/2.B.4/2.B.3"
+    response = requests.get("https://www.onetonline.org/find/descriptor/browse/2.B/2.B.2/2.B.5/2.B.1/2.B.4/2.B.3")
+    html_body = response.text
+    
+    skills_hrefs = re.findall(r"(?s)(?<=/find/descriptor/result/2.B.)(.*?)(?=</a>)", html_body)
+    regex = (r"\">\n"
+	r"    <span class=\"d-block text-center\" style=\"position: absolute; left: -2em; top: 0; width: 2em\"><i aria-hidden=\"true\" class=\"fas fa-list-alt\"></i></span>\n"
+	r"    ")
+    "\">\n<span class=\"d-block text-center\" style=\"position: absolute; left: -2em; top: 0; width: 2em\"><i aria-hidden=\"true\" class=\"fas fa-list-alt\"></i></span>"
+
+    suffix_skill = [re.sub(regex, ",", s, 0, re.MULTILINE).split(",") for s in skills_hrefs]
+    
+    params = {
+        'fmt': 'csv',
+    }
+
+    for suffix, file_name in suffix_skill:
+        file_name = file_name.split("\n")[0]
+        url = "https://www.onetonline.org/find/descriptor/result/2.B.{}/{}.csv".format(suffix, file_name)
+        response = requests.get(url, params=params)
+
+        with open(cross_skills_dir + "{}.csv".format(file_name), 'wb') as f:
+            f.write(response.content)
+
+
 if __name__ == "__main__":
     raw_data_dir = "raw_data/"
     mkdir(raw_data_dir)
@@ -82,5 +111,6 @@ if __name__ == "__main__":
     download_interests(raw_data_dir)
     download_knowledge(raw_data_dir)
     download_values(raw_data_dir)
+    download_cross_skills(raw_data_dir)
     
     
