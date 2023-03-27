@@ -25,23 +25,23 @@ os.environ['ROOT_PATH'] = os.path.abspath(os.path.join("..",os.curdir))
 # These are the DB credentials for your OWN MySQL
 # Don't worry about the deployment credentials, those are fixed
 # You can use a different DB name if you want to
-MYSQL_USER = "root"
-MYSQL_USER_PASSWORD = "JensenMan615"
-MYSQL_PORT = 3306
-MYSQL_DATABASE = "kardashiandb"
+# MYSQL_USER = "root"
+# MYSQL_USER_PASSWORD = os.getenv("MYSQL_USER_PASSWORD")
+# MYSQL_PORT = 3306
+# MYSQL_DATABASE = "kardashiandb"
 
-mysql_engine = MySQLDatabaseHandler(MYSQL_USER,MYSQL_USER_PASSWORD,MYSQL_PORT,MYSQL_DATABASE)
+# mysql_engine = MySQLDatabaseHandler(MYSQL_USER,MYSQL_USER_PASSWORD,MYSQL_PORT,MYSQL_DATABASE)
 
-# Path to init.sql file. This file can be replaced with your own file for testing on localhost, but do NOT move the init.sql file
-mysql_engine.load_file_into_db('/Users/jensen615/cs4300/careerfinder/init.sql')
+# # Path to init.sql file. This file can be replaced with your own file for testing on localhost, but do NOT move the init.sql file
+# mysql_engine.load_file_into_db('/Users/jensen615/cs4300/careerfinder/init.sql')
 
 app = Flask(__name__)
 CORS(app)
 
 def get_data():
     csv_files = [
-        'data/Data_Job_NY.csv',
-        'data/Data_Job_SF.csv',
+        'data1/Data_Job_NY.csv',
+        'data1/Data_Job_SF.csv',
     ]
 
     df = pd.DataFrame()
@@ -326,10 +326,10 @@ def career_search():
 # Sample search, the LIKE operator in this case is hard-coded, 
 # but if you decide to use SQLAlchemy ORM framework, 
 # there's a much better and cleaner way to do this
-def sql_search(episode):
-    query_sql = f"""SELECT * FROM episodes WHERE LOWER( title ) LIKE '%%{episode.lower()}%%' limit 10"""
-    keys = ["id","title","descr"]
-    data = mysql_engine.query_selector(query_sql)
-    return json.dumps([dict(zip(keys,i)) for i in data])
+# def sql_search(episode):
+#     query_sql = f"""SELECT * FROM episodes WHERE LOWER( title ) LIKE '%%{episode.lower()}%%' limit 10"""
+#     keys = ["id","title","descr"]
+#     data = mysql_engine.query_selector(query_sql)
+#     return json.dumps([dict(zip(keys,i)) for i in data])
 
 app.run(debug=True)
