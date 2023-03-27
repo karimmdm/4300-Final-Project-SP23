@@ -22,6 +22,23 @@ def download_interests(data_dir):
         with open(interests_dir + "{}.csv".format(i), 'wb') as f:
             f.write(response.content)
 
+def download_values(data_dir):
+    values_dir = data_dir+"values/"
+    mkdir(values_dir)
+    
+    values = ["Achievement", "Independence", "Recognition", "Relationships", "Support", "Working_Conditions"]
+    
+    params = {
+        'fmt': 'csv',
+    }
+    
+    for v in values:
+        url = "https://www.onetonline.org/explore/workvalues/{}/{}.csv".format(v, v)
+        response = requests.get(url, params=params)
+
+        with open(values_dir + "{}.csv".format(v), 'wb') as f:
+            f.write(response.content)
+
 def download_knowledge(data_dir):
     knowledge_dir = data_dir+"knowledge/"
     mkdir(knowledge_dir)
@@ -64,4 +81,6 @@ if __name__ == "__main__":
     
     download_interests(raw_data_dir)
     download_knowledge(raw_data_dir)
+    download_values(raw_data_dir)
+    
     
