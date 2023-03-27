@@ -7,10 +7,10 @@ class OnetCsvHandler(object):
     def __init__(self) -> None:
         self._onet_dictionary = {}
 
-    def data(self):
+    def data(self) -> dict: 
         return self._onet_dictionary
     
-    def update_table_with_csv(self, job_attribute, csv_dir):
+    def update_table_with_csv(self, job_attribute, csv_dir) -> None:
         # skills: Importance,Level,Job Zone,Code,Occupation
         # knowledge: Importance,Level,Job Zone,Code,Occupation
         file_name = csv_dir.split("/")[-1].split(".")[0]
@@ -29,7 +29,7 @@ class OnetCsvHandler(object):
             
             self._onet_dictionary[code][job_attribute].append((file_name, row.get("Importance", None)))
 
-    def bulk_update(self, raw_data_dir):
+    def bulk_update(self, raw_data_dir) -> None:
         if not os.path.isdir(raw_data_dir):
             print(f"missing {raw_data_dir} directory")
             exit
