@@ -17,3 +17,6 @@ dist/
 build/
 *.egg-info/
 helpers/*
+
+.env
+**/raw_data/
