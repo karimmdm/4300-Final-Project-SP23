@@ -22,3 +22,5 @@ Werkzeug==2.2.2
 python-dotenv
 requests
 pandas
+nltk
+numpy
