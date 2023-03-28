@@ -17,6 +17,8 @@ from nltk.tokenize import TreebankWordTokenizer
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from IPython.core.display import HTML
+import sys
+from helpers import  OnetCsvHandler
 
 # ROOT_PATH for linking with all your files. 
 # Feel free to use a config.py or settings.py with a global export variable
@@ -39,21 +41,46 @@ app = Flask(__name__)
 CORS(app)
 
 def get_data():
-    csv_files = [
-        'data1/Data_Job_NY.csv',
-        'data1/Data_Job_SF.csv',
-    ]
+    # csv_files = [
+    #     'data1/Data_Job_NY.csv',
+    #     'data1/Data_Job_SF.csv',
+    # ]
 
-    df = pd.DataFrame()
+    # # df = pd.DataFrame()
 
-    for file in csv_files:
-        df_temp = pd.read_csv(file)
-        df = df.append(df_temp, ignore_index=True)
+    # # for file in csv_files:
+    # #     df_temp = pd.read_csv(file)
+    # #     df = df.append(df_temp, ignore_index=True)
 
-    jobs = df.drop(['Date_Posted', 'Valid_until', 'Job_Type'], axis=1)
+    # # jobs = df.drop(['Date_Posted', 'Valid_until', 'Job_Type'], axis=1)
 
-    print(jobs.shape[0])
+    # # print(jobs.shape[0])
+    # return jobs
+
+    csv_handler = OnetCsvHandler.OnetCsvHandler()
+    file = os.path.join(os.environ['ROOT_PATH'], "backend/helpers/raw_data")
+    csv_handler.bulk_update(file)
+    jobs = csv_handler.data()
+
+    print(type(jobs))
     return jobs
+
+# dictionary
+
+
+
+'''
+45-2041.00 {
+    'occupation': 'Graders and Sorters, Agricultural Products', 
+    'values': [('Working_Conditions', None), ('Support', None)], 
+    'knowledge': [('Administrative', 16), ('Engineering_and_Technology', 23), ('Administration_and_Management', 32), ('English_Language', '51'), ('Biology', '10'), ('Philosophy_and_Theology', '8'), ('Psychology', 10), ('Customer_and_Personal_Service', 28), ('Law_and_Government', 9), ('Computers_and_Electronics', 25), ('Medicine_and_Dentistry', '17'), ('Building_and_Construction', '8'), ('Food_Production', '45'), ('Public_Safety_and_Security', 33), ('History_and_Archeology', '6'), ('Economics_and_Accounting', 7), ('Geography', 6), ('Therapy_and_Counseling', 9), ('Chemistry', '18'), ('Mathematics', 27), ('Communcations_and_Media', 12), ('Physics', '14'), ('Telecommunications', 6), ('Sociology_and_Anthropology', 5), ('Fine_Arts', '5'), ('Sales_and_Marketing', 21), ('Personnel_and_Human_Resources', 24), ('Design', 5), ('Mechanical', 50), ('Education_and_Training', 43), ('Production_and_Processing', 66), ('Foreign_Language', 34), ('Transportation', 24)], 
+    'interests': [('Realistic', None)], 
+    'cross-skills': [('Programming', 0), ('Persuasion', 22), ('Equipment Maintenance', 0), ('Quality Control Analysis', 22), ('Operation and Control', 13), ('Service Orientation', 22), ('Instructing', 16), ('Coordination', 38), ('Judgment and Decision Making', 31), ('Troubleshooting', 13), ('Installation', 0), ('Management of Financial Resources', 3), ('Equipment Selection', 0), ('Complex Problem Solving', 28), ('Negotiation', 19), ('Operations Monitoring', 16), ('Systems Evaluation', 16), ('Management of Personnel Resources', 10), ('Management of Material Resources', 3), ('Social Perceptiveness', 28), ('Operations Analysis', 0), ('Technology Design', 0), ('Repairing', 0), ('Systems Analysis', 22), ('Time Management', 31)] 
+}
+
+inverted_index[term] = [(job1, tf1), (job2, tf2), ...]
+
+'''
 
 def inverted_index(jobs):
     """ Builds an inverted index from the job descriptions.
@@ -76,18 +103,31 @@ def inverted_index(jobs):
         inverted_index[term] = [(d1, tf1), (d2, tf2), ...]
         
     """
-    inv_index = defaultdict(list)
-    i = 0
-    
-    for d in jobs['Tokens']:
-        
-        counts = Counter(d)        
-        for k, v in counts.items():
-            tup = (i, v)
-            inv_index[k].append(tup)          
-        i += 1
-        
-    return inv_index
+    inv_idx = defaultdict(list)
+
+    # i = 0
+    # for k, v in jobs.items():
+    #     if i < 2:
+    #         print(k, v)
+    #     i += 1
+
+    for doc, d in jobs.items():
+
+        # used for debugging problem with d.get('cross-skills')
+        # print(doc, d.keys())
+
+        skills = d.get('cross-skills')
+
+        if skills:
+            for skill, tf in skills:
+                skill = skill.lower().replace('_', ' ')
+                inv_idx[skill].append((doc, tf))
+
+            for skill, tf in d['knowledge']:
+                skill = skill.lower().replace('_', ' ')
+                inv_idx[skill].append((doc, tf))
+
+    return inv_idx
 
 def compute_idf(inv_idx, n_docs, min_df=10, max_df_ratio=0.95):
     """ Compute term IDF values from the inverted index.
@@ -120,13 +160,66 @@ def compute_idf(inv_idx, n_docs, min_df=10, max_df_ratio=0.95):
 
     idf = {}
     
+    # key: terms, values: list tuples (job_id, score freq)
     for k, v in inv_idx.items():
         dft = len(v)
-        if not (dft < min_df or (dft / n_docs) > max_df_ratio):   
-            c = n_docs / (1 + dft)
-            idf[k] = math.log2(c)
+
+        print("length of tuples")
+        print(dft)
+        print("max ratio")
+        print(dft/n_docs)
+        print()
+
+        # makes assumption around scale of #
+        # if not (dft < min_df or (dft / n_docs) > max_df_ratio):   
+        c = n_docs / (1 + dft)
+        idf[k] = math.log2(c)
         
     return idf
+
+def compute_idf_new(inv_idx, jobs, min_df=10, max_df_ratio=0.95):    
+    # print("job keys: ")
+    # print(jobs.keys())
+    # print()
+
+    jobs_arr = list(jobs.keys())
+    n_careers = len(jobs.items())
+    n_skills = len(inv_idx.items())
+
+    tf_idf = np.zeros((n_skills, n_careers))
+
+    for idx, skill in enumerate(inv_idx):
+        career_tups = inv_idx.get(skill)
+        skill_total = 0
+        # print("index: ")
+        # print(idx)
+        # print()
+        # print("skill: ")
+        # print(skill)
+        # print()
+        # print("careers: ")
+        # print(career_tups)
+        # print()
+
+        for c_id, score in career_tups:
+            s = 0
+
+            try:
+                s = int(score)
+
+            except:
+                pass
+
+            skill_total += s
+
+            career_idx = jobs_arr.index(c_id)
+            tf_idf[idx][career_idx] += s
+
+        # need sum of how many career points total for THAT skill
+        tf_idf[idx] /= (1 + skill_total)
+
+    return tf_idf
+
 
 def compute_doc_norms(index, idf, n_docs):
     """ Precompute the euclidean norm of each document.
@@ -140,25 +233,64 @@ def compute_doc_norms(index, idf, n_docs):
         Precomputed idf values for the terms.
     
     n_docs: int,
-        The total number of documents.
+        The total number of jobs
     
     Returns
     =======
     
     norms: np.array, size: n_docs
-        norms[i] = the norm of document i.
+        norms[i] = the norm of job i.
     """
     
-    norms = np.zeros(n_docs)
+    # norms = np.zeros(n_docs)
     
-    for k, v in index.items():
-        idf_k = idf.get(k)
+    # print("inv index in doc norms: ")
+    # print(index.items())
+    # print()
+    # print()
+    # print()
 
-        if idf_k: 
-            for doc_id, freq in v:
-                norms[doc_id] += (idf_k * freq) **2
+    # for job_, career_tups in index.items():
+    #     jobs_arr = list(jobs.keys())
 
-    return np.sqrt(norms)
+    #     # need to idf val for a job_id
+    #     career_idx = jobs_arr.index(job_id)
+        
+    #     idf_k = idf[][]
+
+    #     print("idf_k: ")
+    #     print(idf_k)
+    #     print()
+
+    #     print("jobId: ")
+    #     print(job_id)
+    #     print()
+
+    #     if idf_k: 
+    #         for job_id, score in career_tups:
+    #             s = 0
+                
+    #             try:
+    #                 s = int(score)
+
+    #             except:
+    #                 pass
+
+    #             norms[job_id] += (idf_k * score) **2
+
+    # return np.sqrt(norms)
+
+    # norms = np.zeros(n_docs)
+    
+    # for k, v in index.items():
+    #     idf_k = idf.get(k)
+    #     if idf_k:
+    #         for doc_id, freq in v:
+    #             norms[doc_id] += (freq * idf_k)**2
+    
+    # norms = np.sqrt(norms)
+    norms = np.linalg.norm(idf, axis=0)
+    return norms
 
 def dot_scores(query_word_counts, index, idf):
     """ Perform a term-at-a-time iteration to efficiently compute the numerator term of cosine similarity across multiple documents.
@@ -189,7 +321,11 @@ def dot_scores(query_word_counts, index, idf):
     for k, v in query_word_counts.items():
         
         if v != 0: 
+            # list of career tups
             i = index.get(k)
+
+            # get idf value for a given skill
+            # idf[skill]
             idf_k = idf.get(k)
             
             if idf_k and i:
@@ -202,18 +338,39 @@ def dot_scores(query_word_counts, index, idf):
 
 tokenizer = RegexpTokenizer(r'\w+')
 jobs = get_data()
-jobs['Tokens'] = jobs['Job_Desc'].apply(lambda x: tokenizer.tokenize(x))
+# jobs['Tokens'] = jobs['Job_Desc'].apply(lambda x: tokenizer.tokenize(x))
 
+# key = term, val = list of tuples (job_code, score)
 inv_idx = inverted_index(jobs)
 
-# documents can be very long so we can use a large value here
-# examine the actual DF values of common words like "the" to set these values
-idf = compute_idf(inv_idx, jobs.shape[0], min_df=10, max_df_ratio=0.5)  
+# to display inv_idx
+# print("inv_idx items before: ")
+# print(inv_idx.items())
+# print()
+
+# # documents can be very long so we can use a large value here
+# # examine the actual DF values of common words like "the" to set these values
+print("jobs length")
+print(len(jobs.items()))
+print()
+
+# idf = compute_idf(inv_idx, len(jobs.items())) 
+idf = compute_idf_new(inv_idx, jobs)
 
 # prune the terms left out by idf
-inv_idx = {key: val for key, val in inv_idx.items() if key in idf} 
+# inv_idx = {key: val for key, val in inv_idx.items() if key in idf}
+print("inv_idx items after: ")
+print(inv_idx.keys())
+print()
 
-doc_norms = compute_doc_norms(inv_idx, idf, jobs.shape[0])
+print("idf items: ")
+print(idf)
+
+# for k, v in idf.items():
+#     print(k, v)
+
+doc_norms = compute_doc_norms(inv_idx, idf, len(jobs.items()))
+print(doc_norms)
 
 
 def np_encoder(object):
@@ -269,16 +426,22 @@ def index_search(query, index, idf, doc_norms, score_func=dot_scores, tokenizer=
     results = []
     unique_jobs = set()
     
+    # print(len(doc_scores.items()))
+
     for job_id, v in doc_scores.items():
         numer = v
         denom = q_norm * doc_norms[job_id]
         score = numer / denom
         
-        tup = (jobs.iloc[job_id]['Job_title'], jobs.iloc[job_id]['Industry'])
-        if not tup in unique_jobs:
-            results.append((score, job_id))
-            unique_jobs.add(tup)
+        results.append((score, job_id))
+
+        # tup = (jobs.iloc[job_id]['Job_title'], jobs.iloc[job_id]['Industry'])
+        # if not tup in unique_jobs:
+        #     results.append((score, job_id))
+        #     unique_jobs.add(tup)
         
+
+    # print(results)
     results = sorted(results, key=lambda x: x[0], reverse=True)
     return results
 
@@ -291,6 +454,7 @@ def top10_results(query):
     count = 0
     results = index_search(query, inv_idx, idf, doc_norms)
 
+    # print(results)
 
     output = []
     for score, job_id in results:
@@ -300,15 +464,13 @@ def top10_results(query):
         
         result = {
             'Score': score,
-            'Job Title': jobs.iloc[job_id]['Job_title'],
-            'Industry': jobs.iloc[job_id]['Industry'],
-            'Min Salary': jobs.iloc[job_id]['Min_Salary'],
-            'Max Salary': jobs.iloc[job_id]['Min_Salary'],
+            'Job Title': jobs[job_id]['occupation'],
         }
 
         result = json.dumps(result, default=np_encoder)
         output.append(result)
         
+    # print(output)
     return output
 
 

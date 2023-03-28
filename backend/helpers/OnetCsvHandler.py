@@ -34,15 +34,15 @@ class OnetCsvHandler(object):
             print(f"missing {raw_data_dir} directory")
             exit
         else:
-            for subdir in os.scandir("raw_data"):
+            for subdir in os.scandir(raw_data_dir):
                 for file_name in os.scandir(subdir):
                     if not file_name.is_file():
                         continue
                     self.update_table_with_csv(subdir.name, file_name.path)
     
-if __name__ == "__main__":
-    csv_handler = OnetCsvHandler()
-    csv_handler.bulk_update("raw_data")
-    print(csv_handler.data())
+# if __name__ == "__main__":
+#     csv_handler = OnetCsvHandler()
+#     csv_handler.bulk_update("raw_data")
+#     print(csv_handler.data())
 
     
