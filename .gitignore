@@ -20,3 +20,5 @@ helpers/*
 
 .env
 **/raw_data/
+
+.vscode/*
