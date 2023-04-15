@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Career Finder</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 </head>
 
 <body>
@@ -28,6 +30,33 @@
             </button>
         </form>
     </div>
+
+    <div class="container px-6 py-10 mx-auto" id="careers-container">
+        <!-- <div class="grid grid-cols-1 gap-8 mt-8 xl:mt-12 xl:gap-12 sm:grid-cols-2 xl:grid-cols-4 lg:grid-cols-3 animate-pulse"
+            id="careers-grid">
+        </div> -->
+    </div>
+
+    <script>
+        const CareerCard = () => {
+            skillsDiagram = React.createElement("div", { "class": "w-full h-64 bg-gray-300 rounded-lg dark:bg-gray-600" });
+            careerTitle = React.createElement("h1", { "class": "w-56 h-2 mt-4 bg-gray-200 rounded-lg dark:bg-gray-700" });
+            card = React.createElement("div", { "class": "w-full" }, [skillsDiagram, careerTitle]);
+            return card;
+        };
+
+        const CareerCardGrid = () => {
+            cards = new Array();
+            for (var i = 0; i < 8; i++) {
+                cards.push(CareerCard());
+            }
+            gridClass = "grid grid-cols-1 gap-8 mt-8 xl:mt-12 xl:gap-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-pulse";
+            grid = React.createElement("div", { "class": gridClass, "id": "careers-grid" }, cards);
+            return grid;
+        }
+
+        ReactDOM.render(React.createElement(CareerCardGrid), document.getElementById("careers-container"));
+    </script>
 </body>
 
 </html>
