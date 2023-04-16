@@ -5,10 +5,13 @@ import re
 def mkdir(path):
     if not os.path.isdir(path):
         os.makedirs(path)
+        return True
+    
+    return False
 
 def download_interests(data_dir):
     interests_dir = data_dir+"interests/"
-    mkdir(interests_dir)
+    if not mkdir(interests_dir): return
     
     interests = ["Realistic", "Investigative", "Artistic", "Social", "Enterprising", "Conventional"]
     
@@ -25,7 +28,7 @@ def download_interests(data_dir):
 
 def download_values(data_dir):
     values_dir = data_dir+"values/"
-    mkdir(values_dir)
+    if not mkdir(values_dir): return 
     
     values = ["Achievement", "Independence", "Recognition", "Relationships", "Support", "Working_Conditions"]
     
@@ -42,7 +45,7 @@ def download_values(data_dir):
 
 def download_knowledge(data_dir):
     knowledge_dir = data_dir+"knowledge/"
-    mkdir(knowledge_dir)
+    if not mkdir(knowledge_dir): return
 
     def file_names(number, letters, page_names): #annoying path requries number an letter
         names =  [s.replace(" ", "_") for s in page_names]         
