@@ -4,9 +4,10 @@ from collections import Counter
 import json
 import math
 import numpy as np
-from nltk.tokenize import TreebankWordTokenizer
+from nltk.tokenize import word_tokenize
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
 
 # --------------- EXAMPLE STRUCTURE OF ONET DATA --------------- #
@@ -21,8 +22,10 @@ from nltk.corpus import stopwords
 inverted_index[term] = [(job1, tf1), (job2, tf2), ...]
 '''
 
-def inverted_index(jobs):
-    """ Builds an inverted index from the job descriptions.
+default_lemmmatizer = WordNetLemmatizer()
+
+def inverted_index(jobs, default_attribute_item_score=75):
+    """ Builds an inverted index ordering ONET jobs for each skill, knowledge, etc...
     
     Arguments
     =========
@@ -42,55 +45,40 @@ def inverted_index(jobs):
     =======
     
     inverted_index: dict
-        For each term (skill), the index contains 
+        For each term (job attribute item like skill, interest, knowledge), the index contains 
         a sorted list of tuples (job_id, importance-score)
         such that tuples with smaller job_ids appear first:
-        inverted_index[term] = [(d1, tf1), (d2, tf2), ...]
+        inverted_index[job_attribute_item] = [(job_id1, importance-score1), (job_id2, importance-score2), ...]
         
     """
-    inv_idx = defaultdict(list)
+    inv_idx = {}
 
-    for doc, d in jobs.items():
-
-        # used for debugging problem with d.get('cross-skills')
-        # print(doc, d.keys())
-
-        skills = d.get('cross-skills')
-        if skills:
-            for skill, tf in skills:
-                skill = skill.lower().replace('_', ' ')
+    for job_code, attributes_dict in jobs.items():
+        for attr, attribut_items in attributes_dict.items():
+                if attr == "occupation": continue
                 
-                try: 
-                    score = int(tf)
-                    if score > 20:
-                        inv_idx[skill].append((doc, score))
-                except:
-                    pass
-
-        knowledge = d.get('knowledge')
-        if knowledge:
-            for skill, tf in knowledge:
-                skill = skill.lower().replace('_', ' ')
-
-                try: 
-                    score = int(tf)
-                    if score > 20:
-                        inv_idx[skill].append((doc, score))
-                except:
-                    pass
+                for attr_item, importance in attribut_items:
+                    attr_item = attr_item.lower().replace('_', ' ')
+                    if attr_item not in inv_idx:
+                        inv_idx[attr_item] = []
+                    inv_idx[attr_item].append((job_code, importance if importance else default_attribute_item_score))
+        
+        for attr_item in inv_idx:
+            inv_idx[attr_item].sort(key=lambda x: x[1], reverse = True)
+    
     return inv_idx
 
 def job_to_idx(jobs):
     job_idx_map = {}
     
     counter = 0
-    for id in jobs.keys():
-        job_idx_map[id] = counter
+    for code in jobs.keys():
+        job_idx_map[code] = counter
         counter += 1
 
     return job_idx_map
 
-def skill_to_idx(inv_idx):
+def skill_to_idx(inv_idx): #skill is attribute item
     skil_idx_map = {}
     
     counter = 0
@@ -100,7 +88,7 @@ def skill_to_idx(inv_idx):
 
     return skil_idx_map
 
-def compute_idf(index, n_docs, min_df=10, max_df_ratio=0.95):
+def compute_idf(inv_idx, n_docs, min_df=10, max_df_ratio=0.95):
     """ Compute term IDF values from the inverted index.
     Words that are too frequent or too infrequent get pruned.
     
@@ -132,16 +120,15 @@ def compute_idf(index, n_docs, min_df=10, max_df_ratio=0.95):
     idf = {}
     
     # key: skills, values: list of (job_id, score) tuples 
-    for skill, postings in index.items():
+    for skill, postings in inv_idx.items():
         # dft: document frequency for this skill (term)
         dft = len(postings)
-
         c = n_docs / (1 + dft)
-        idf[skill] = math.log2(c)
+        idf[skill] = math.log2(c) ## is boutnd to be 0 for almost all of the itmes becasue the skills appear in all the docs!!!
         
     return idf
 
-def compute_doc_norms(index, idf, n_docs, job_idx_map):
+def compute_doc_norms(inv_idx, idf, n_docs, job_idx_map):
     """ Precompute the euclidean norm of each document.
     
     Arguments
@@ -163,18 +150,18 @@ def compute_doc_norms(index, idf, n_docs, job_idx_map):
     """
     norms = np.zeros(n_docs)
 
-    for skill, career_tups in index.items():
+    for skill, postings in inv_idx.items():
 
         idf_k = idf.get(skill)
         if idf_k:
 
-            for job_id, score in career_tups:
+            for job_id, score in postings:
                 job_idx = job_idx_map.get(job_id)
                 norms[job_idx] += (float(score) * idf_k) **2
     
     return np.sqrt(norms)
 
-def dot_scores(query_word_counts, index, idf):
+def dot_scores(query_word_counts, inv_idx, idf):
     """ Perform a term-at-a-time iteration to efficiently compute the numerator term of cosine similarity across multiple documents.
     
     Arguments
@@ -200,25 +187,27 @@ def dot_scores(query_word_counts, index, idf):
     doc_scores = {}
     
     for term, freq in query_word_counts.items():
-        
-        # just a sanity check, can try w/ and w/out it
-        if freq != 0:
-            # get list of career tuples for given skill
-            career_tups = index.get(term)
-            # get idf score for given skill
-            idf_k = idf.get(term)
-            
-            # make sure that this term wasn't pruned from inv_idx and that career_tups isn't empty
-            if idf_k and career_tups:
+        if freq == 0:
+            continue
+        # get list of career tuples for given skill
+        career_tups = inv_idx.get(term)
+        # get idf score for given skill
+        idf_k = idf.get(term)
+        # make sure that this term wasn't pruned from inv_idx and that career_tups isn't empty
+        # if idf_k and career_tups:
+        #     for job_id, score in career_tups:
 
-                for job_id, score in career_tups:
+        #         # dot = (freq * idf_k) * (score * idf_k) 
+        #         doc_scores[job_id] = doc_scores.get(job_id, 0) + dot 
+        if not career_tups:
+            continue
 
-                    dot = (freq * idf_k) * (score * idf_k)
-                    doc_scores[job_id] = doc_scores.get(job_id, 0) + dot 
+        for job_id, score in career_tups:
+            doc_scores[job_id] = freq * score
         
     return doc_scores
 
-def index_search(query, index, idf, doc_norms, score_func=dot_scores, tokenizer=RegexpTokenizer(r'\w+')):
+def index_search(query, index, idf, doc_norms, job_idx_map, score_func=dot_scores, tokenizer=RegexpTokenizer(r'\w+')):
     """ Search the collection of documents for the given query
     
     Arguments
@@ -250,7 +239,6 @@ def index_search(query, index, idf, doc_norms, score_func=dot_scores, tokenizer=
     Note: 
         
     """
-    
     q = tokenizer.tokenize(query)
     q_counts = Counter(q)
     doc_scores = score_func(q_counts, index, idf)
@@ -270,12 +258,15 @@ def index_search(query, index, idf, doc_norms, score_func=dot_scores, tokenizer=
     results = []
     
     for job_id, v in doc_scores.items():
-        job_idx = job_to_idx.get(job_id)
+        job_idx = job_idx_map.get(job_id)
 
-        numer = v
-        denom = q_norm * doc_norms[job_idx]
-        sim_score = numer / denom
-        results.append((sim_score, job_id))
+        try:
+            numer = int(v)
+            denom = q_norm * doc_norms[job_idx]
+            sim_score = numer / max(denom, 1)
+            results.append((sim_score, job_id))
+        except:
+            print("failed", job_id, v)
         
     results = sorted(results, key=lambda x: x[0], reverse=True)
     return results
@@ -284,14 +275,13 @@ def np_encoder(object):
     if isinstance(object, np.generic):
         return object.item()
     
-def top10_results(query, jobs, inv_idx, idf, doc_norms):
+def top10_results(query, jobs, inv_idx, idf, doc_norms, job_idx_map):
 
     print("#" * len(query))
     print(query)
     print("#" * len(query))
 
-    results = index_search(query, inv_idx, idf, doc_norms)
-
+    results = index_search(query, inv_idx, idf, doc_norms, job_idx_map)
     count = 0
     output = []
     for score, job_id in results:
@@ -301,22 +291,13 @@ def top10_results(query, jobs, inv_idx, idf, doc_norms):
         
         get_job = jobs[job_id]
         occupation = get_job['occupation']
-        skills = get_job['cross-skills']
-        top10_skills = skills
-        knowledge = get_job['knowledge']
-        top10_knowledge = knowledge
-
-        if skills:
-            top10_skills = skills[:10]
-
-        if knowledge:
-            top10_knowledge = knowledge[:10]
+        top = get_job['cross-skills'] + get_job['knowledge']
+        top.sort(key=lambda x:int(x[1]), reverse=True)
 
         result = {
-            'Score': score,
-            'Job Title': occupation,
-            'Top 10 Skills': top10_skills,
-            'Top 10 Knowledge': top10_knowledge,
+            'score': score,
+            'job': occupation,
+            'top10': top[:10],
         }
 
         result = json.dumps(result, default=np_encoder)
@@ -324,7 +305,11 @@ def top10_results(query, jobs, inv_idx, idf, doc_norms):
 
     return output
 
+def query_to_skills(query, lemmatizer=default_lemmmatizer):
+    query_words = word_tokenize(query)
+    words = [lemmatizer.lemmatize(word.lower()) for word in words if word not in set(stopwords.words('english'))]
 
+    return words
 
 
 

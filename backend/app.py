@@ -15,7 +15,7 @@ from nltk.corpus import stopwords
 from IPython.core.display import HTML
 import sys
 from helpers import  OnetCsvHandler
-import recommender_tools as rt
+import onet_recommender_tools as ort
 from helpers import onet_downloader
 
 # ROOT_PATH for linking with all your files. 
@@ -39,36 +39,49 @@ app = Flask(__name__)
 CORS(app)
 
 
-def get_data():
-    raw_data_dir = os.path.join(os.environ['ROOT_PATH'], "backend/helpers/raw_data")
-    onet_downloader.mkdir(raw_data_dir)
+def get_data(download=True):
+    raw_data_dir = os.path.join(os.environ['ROOT_PATH'], "backend/helpers/raw_data/")
     
-    onet_downloader.download_interests(raw_data_dir)
-    onet_downloader.download_knowledge(raw_data_dir)
-    onet_downloader.download_values(raw_data_dir)
-    onet_downloader.download_cross_skills(raw_data_dir)
+    if download:
+        onet_downloader.mkdir(raw_data_dir)
+        
+        onet_downloader.download_interests(raw_data_dir)
+        onet_downloader.download_knowledge(raw_data_dir)
+        onet_downloader.download_values(raw_data_dir)
+        onet_downloader.download_cross_skills(raw_data_dir)
 
     csv_handler = OnetCsvHandler.OnetCsvHandler()
     csv_handler.generate_onet_dictionary(raw_data_dir)
     return csv_handler.data()
 
-jobs = get_data()
-inv_idx = rt.inverted_index(jobs)
-job_idx_map = rt.job_to_idx(jobs)
-skills_idx_map = rt.skill_to_idx(inv_idx)
+jobs = get_data(False)
+inv_idx = ort.inverted_index(jobs)
+job_idx_map = ort.job_to_idx(jobs)
+p = inv_idx.get("programming")[0]
+skills_idx_map = ort.skill_to_idx(inv_idx)
 n_docs = len(jobs.items())
-idf = rt.compute_idf(inv_idx, n_docs)
-doc_norms = rt.compute_doc_norms(inv_idx, idf, n_docs)
-
+idf = ort.compute_idf(inv_idx, n_docs)
+doc_norms = ort.compute_doc_norms(inv_idx, idf, n_docs, job_idx_map)
+print(inv_idx.keys())
+# print(p)
+# print(job_idx_map[p[0]])
+# print(skills_idx_map["programming"])
+# print(n_docs)
+# print(idf.get("programming"))
+# ps = ort.index_search("programming", inv_idx, idf, doc_norms, job_idx_map)
+# print(len(ps))
+# print(ort.top10_results('programming', jobs, inv_idx, idf, doc_norms, job_idx_map))
 
 @app.route("/")
 def home():
-    return render_template('base.html',title="sample html")
+    return render_template('careerFinder.html', title="sample html")
 
 @app.route("/search")
 def career_search():
     text = request.args.get("interest")
-    return rt.top10_results(text, jobs, inv_idx, idf, doc_norms)
+    result = ort.top10_results(text, jobs, inv_idx, idf, doc_norms, job_idx_map)
+    print(result)
+    return result
 
 
 # Sample search, the LIKE operator in this case is hard-coded, 
