@@ -1,5 +1,4 @@
 import pandas as pd
-from collections import defaultdict
 import os
 
 class OnetCsvHandler(object):
@@ -29,12 +28,12 @@ class OnetCsvHandler(object):
             
             self._onet_dictionary[code][job_attribute].append((file_name, row.get("Importance", None)))
 
-    def bulk_update(self, raw_data_dir) -> None:
+    def generate_onet_dictionary(self, raw_data_dir) -> None:
         if not os.path.isdir(raw_data_dir):
             print(f"missing {raw_data_dir} directory")
             exit
         else:
-            for subdir in os.scandir("raw_data"):
+            for subdir in os.scandir(raw_data_dir):
                 for file_name in os.scandir(subdir):
                     if not file_name.is_file():
                         continue
