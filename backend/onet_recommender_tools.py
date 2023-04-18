@@ -8,6 +8,7 @@ from nltk.tokenize import word_tokenize
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+import glassdoor_search as gs
 
 
 # --------------- EXAMPLE STRUCTURE OF ONET DATA --------------- #
@@ -294,10 +295,17 @@ def top10_results(query, jobs, inv_idx, idf, doc_norms, job_idx_map):
         top = get_job['cross-skills'] + get_job['knowledge']
         top.sort(key=lambda x:int(x[1]), reverse=True)
 
+        review = None
+        try:
+            review = gs.match_job_title(occupation)
+        except:
+            pass
+
         result = {
             'score': score,
             'job': occupation,
             'top10': top[:10],
+            'review': review,
         }
 
         result = json.dumps(result, default=np_encoder)
