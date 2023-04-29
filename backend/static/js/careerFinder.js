@@ -47,14 +47,23 @@ function drawSpiderChart(cardEltId, data) {
 }
 
 const CareerCard = (eltId, occupationText, firm, reviewScore, reviewText) => {
-    return ` 
-        <div class="w-full drop-shadow-lg">
-            <div class="w-full h-64 bg-gray-300 rounded-lg dark:bg-gray-600" id="${eltId}"></div>
+    if(firm != "No Match") {
+        return ` 
+            <div class="w-full drop-shadow-lg">
+                <div class="w-full h-64 bg-gray-300 rounded-lg dark:bg-gray-600" id="${eltId}"></div>
 
-            <h1 class="w-full h-full">${occupationText}</h1>
-            <h2 class="w-full h-full">${firm} (${reviewScore}/5)</h2>
-            <p class="w-full h-full">${reviewText}</p>
-        </div>`
+                <h1 class="w-full h-full">${occupationText}</h1>
+                <h2 class="w-full h-full">${firm} (${reviewScore}/5)</h2>
+                <p class="w-full h-full">${reviewText}</p>
+            </div>`;
+    } else {
+        return ` 
+            <div class="w-full drop-shadow-lg">
+                <div class="w-full h-64 bg-gray-300 rounded-lg dark:bg-gray-600" id="${eltId}"></div>
+                <h1 class="w-full h-full">${occupationText}</h1>
+            </div>`;
+    }
+
 };
 
 function CreateCareerCardsTiles(numCards, data) {

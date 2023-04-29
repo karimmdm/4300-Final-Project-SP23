@@ -298,7 +298,7 @@ def top10_results(query, jobs, inv_idx, idf, doc_norms, job_idx_map):
         review = None
         try:
             review = gs.match_job_title(occupation)
-        except:
+        except Exception as e:
             pass
 
         result = {
