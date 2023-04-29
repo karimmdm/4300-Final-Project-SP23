@@ -1,4 +1,36 @@
-const cardGrid = document.getElementById('card-grid');
+const cardGridContainer = document.getElementById('careers-container');
+
+const CareerCard = (eltId, occupationText) => {
+    return ` 
+        <div class="w-full drop-shadow-lg">
+            <div class="w-full h-64" id="${eltId}"></div>
+
+            <h1 class="w-full h-full">${occupationText}</h1>
+        </div>`
+};
+
+function CreateCareerCardsGrid(numCards, data) {
+    let grid = `<div class="grid grid-cols-1 gap-8 mt-8 xl:mt-12 xl:gap-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            id="card-grid">
+        </div>`;
+    
+    let cardGrid = document.createElement("div");
+    cardGrid.innerHTML = grid;
+    cardGridContainer.appendChild(cardGrid);
+
+    for (let i = 0; i < numCards; i++) {
+        let cardEltId = 'card' + i;
+        let card = document.createElement("div");
+
+        cardData = JSON.parse(data[i]);
+        console.log(cardEltId, i, cardData);
+
+        card.innerHTML = CareerCard(cardEltId, cardData.job);
+        document.getElementById('card-grid').appendChild(card);
+
+        drawSpiderChart(cardEltId, cardData.top10);
+    }
+}
 
 function drawSpiderChart(cardEltId, data) {
     let svgId = "svg-" + cardEltId;
@@ -46,48 +78,46 @@ function drawSpiderChart(cardEltId, data) {
 
 }
 
-const CareerCard = (eltId, occupationText) => {
-    return ` 
-        <div class="w-full drop-shadow-lg">
-            <div class="w-full h-64 bg-gray-300 rounded-lg dark:bg-gray-600" id="${eltId}"></div>
-
-            <h1 class="w-full h-full">${occupationText}</h1>
-        </div>`
-};
-
-function CreateCareerCardsTiles(numCards, data) {
-    for(let i = 0; i < numCards; i++){
-        let cardEltId = 'card' + i;
-        let card = document.createElement("div");
-        
-        cardData = JSON.parse(data[i]);
-        console.log(cardEltId, i, cardData);
-
-        card.innerHTML = CareerCard(cardEltId, cardData.job);
-        cardGrid.appendChild(card);
-
-        drawSpiderChart(cardEltId, cardData.top10);
-    }
-}
-
-
 function generateCards(data, cardsToDisplay = 8) {
     if (data.length == 0) {
         return;
     }
-    CreateCareerCardsTiles(cardsToDisplay, data);
+    CreateCareerCardsGrid(cardsToDisplay, data);
+}
+
+function error() {
+    let errorMsg = `
+    <div class="flex flex-col items-center justify-center space-y-6 text-center">
+        <div class="container flex flex-col md:flex-row items-center justify-center px-5 text-gray-700">
+            <div class="max-w-md">
+                <div class="text-5xl font-dark font-bold">Dang :(</div>
+                <br />
+                <br />
+                <p class="text-2xl md:text-3xl font-light leading-normal"><strong>We don't support such fancy inputs just yet. Soon!</strong></p><br />
+                <br />
+            </p>
+        </div>
+    </div>`
+    let card = document.createElement("div");
+    card.innerHTML = errorMsg;
+    cardGridContainer.appendChild(card);
 }
 
 function search() {
     // set loading view
-
+    cardGridContainer.innerHTML = '';
     // get the text
     let text = document.getElementById("search-box").value;
     console.log(text);
     fetch("/search?" + new URLSearchParams({ interest: text }).toString())
         .then((response) => response.json())
         .then((data) => {
-            generateCards(data);
+            if (data.length != 0) {
+                generateCards(data);
+            } else {
+                error();
+            }
+
         });
 }
 
