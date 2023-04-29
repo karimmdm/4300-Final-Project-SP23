@@ -54,7 +54,11 @@ def get_data(download=True):
     csv_handler.generate_onet_dictionary(raw_data_dir)
     return csv_handler.data()
 
+<<<<<<< HEAD
 jobs = get_data(True)
+=======
+jobs = get_data()
+>>>>>>> master
 inv_idx = ort.inverted_index(jobs)
 job_idx_map = ort.job_to_idx(jobs)
 p = inv_idx.get("programming")[0]
@@ -62,7 +66,7 @@ skills_idx_map = ort.skill_to_idx(inv_idx)
 n_docs = len(jobs.items())
 idf = ort.compute_idf(inv_idx, n_docs)
 doc_norms = ort.compute_doc_norms(inv_idx, idf, n_docs, job_idx_map)
-print(inv_idx.keys())
+# print(inv_idx.keys())
 # print(p)
 # print(job_idx_map[p[0]])
 # print(skills_idx_map["programming"])
@@ -74,7 +78,7 @@ print(inv_idx.keys())
 
 @app.route("/")
 def home():
-    return render_template('careerFinder.html', title="sample html")
+    return render_template('careerfinder.html', title="sample html")
 
 @app.route("/search")
 def career_search():
@@ -93,4 +97,4 @@ def career_search():
 #     data = mysql_engine.query_selector(query_sql)
 #     return json.dumps([dict(zip(keys,i)) for i in data])
 
-app.run(debug=True)
+#app.run(debug=True)
