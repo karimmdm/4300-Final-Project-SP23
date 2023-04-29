@@ -54,11 +54,7 @@ def get_data(download=True):
     csv_handler.generate_onet_dictionary(raw_data_dir)
     return csv_handler.data()
 
-<<<<<<< HEAD
-jobs = get_data(True)
-=======
 jobs = get_data()
->>>>>>> master
 inv_idx = ort.inverted_index(jobs)
 job_idx_map = ort.job_to_idx(jobs)
 p = inv_idx.get("programming")[0]
