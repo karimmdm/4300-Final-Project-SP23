@@ -74,7 +74,7 @@ doc_norms = ort.compute_doc_norms(inv_idx, idf, n_docs, job_idx_map)
 
 @app.route("/")
 def home():
-    return render_template('careerFinder.html', title="sample html")
+    return render_template('careerfinder.html', title="sample html")
 
 @app.route("/search")
 def career_search():
