@@ -93,4 +93,4 @@ def career_search():
 #     data = mysql_engine.query_selector(query_sql)
 #     return json.dumps([dict(zip(keys,i)) for i in data])
 
-#app.run(debug=True)
+app.run(debug=True)
