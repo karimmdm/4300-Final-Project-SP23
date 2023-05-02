@@ -43,14 +43,15 @@ class QueryHandler(object):
 
     def query(self, text):
         doc = self.nlp(text)
+        print(doc)
         valid_tokens = []
         for token in doc:
             if not token.is_stop and token.pos_ in ['NOUN', 'VERB', 'ADV', 'ADJ']:
                 valid_tokens.append(token.text)
-        
+        valid_text = ""
         for token in valid_tokens:
             if token in self.skills:
-                return token
+                valid_text += token + ";"
         
         similar_words = []
         if self.use_gensim:
@@ -60,7 +61,9 @@ class QueryHandler(object):
         for entry in similar_words:
             for word, score in entry:
                 if word in self.skills:
-                    return word
+                    valid_text += word + ";"
+        if(valid_text != ""):
+            return valid_text
         
         scores = sorted(doc.cats.items(), key=lambda x: x[1], reverse=True)
         txt = ""

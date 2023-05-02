@@ -42,7 +42,7 @@ CORS(app)
 TEST = False
 
 def get_data(download=True):
-    raw_data_dir = os.path.join(os.environ['ROOT_PATH'], "backend/helpers/raw_data/")
+    raw_data_dir = "./helpers/raw_data/"
     
     if download:
         onet_downloader.mkdir(raw_data_dir)
@@ -56,7 +56,7 @@ def get_data(download=True):
     csv_handler.generate_onet_dictionary(raw_data_dir)
     return csv_handler.data()
 
-jobs = get_data(False if TEST else True)
+jobs = get_data(True)
 inv_idx = ort.inverted_index(jobs)
 job_idx_map = ort.job_to_idx(jobs)
 skills_idx_map = ort.skill_to_idx(inv_idx)
@@ -64,8 +64,9 @@ n_docs = len(jobs.items())
 idf = ort.compute_idf(inv_idx, n_docs)
 doc_norms = ort.compute_doc_norms(inv_idx, idf, n_docs, job_idx_map)
 
-skillsTrainingCsvPath = os.path.join(os.environ['ROOT_PATH'], "backend/helpers/querySkillsTraining.csv")
-skillsTrainingCsvPath2 = os.path.join(os.environ['ROOT_PATH'], "backend/helpers/querySkillsTraining2.csv")
+skillsTrainingCsvPath = "./helpers/querySkillsTraining.csv"
+skillsTrainingCsvPath2 = "./helpers/querySkillsTraining2.csv"
+print("loaded training csvs")
 queryHandler = QueryHandler()
 queryHandler.load_csv_training_data(skillsTrainingCsvPath)
 queryHandler.trainCNN()
@@ -78,8 +79,11 @@ def home():
 def career_search():
     text = request.args.get("interest")
     newText = queryHandler.query(text)
+    print("PRINTING INPUT TEXT:")
+    print(text)
+    print("PRINTING NEW TEXT BELOW:")
+    print(newText)
     result = ort.top10_results(newText, jobs, inv_idx, idf, doc_norms, job_idx_map)
-    print(result)
     return result
 
 if TEST:
