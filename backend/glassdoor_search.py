@@ -12,7 +12,15 @@ def match_job_title(job_title):
     for i in range(len(job_words)):
         if job_words[i][-1] == 's':
             job_words[i] = job_words[i][:-1]
-    
+        # if job_words[i][-2:] == 'er':
+        #     job_words[i] = job_words[i][:-2]
+        # if job_words[i][-2:] == 'ie':
+        #     job_words[i] = job_words[i][:-2]
+        # if job_words[i][-10:] == 'ematician':
+        #     job_words[i] = job_words[i][:-9]
+        # if job_words[i][-10:] == 'ician':
+        #     job_words[i] = job_words[i][:-5]
+
     # replace firm dashes with spaces
     reviews['firm'] = reviews['firm'].str.replace('-', ' ')
     # round score to 2 decimal places
