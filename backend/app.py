@@ -42,7 +42,7 @@ CORS(app)
 TEST = False
 
 def get_data(download=True):
-    raw_data_dir = os.path.join("/helpers/raw_data/")
+    raw_data_dir = "/helpers/raw_data/"
     
     if download:
         onet_downloader.mkdir(raw_data_dir)
@@ -64,8 +64,8 @@ n_docs = len(jobs.items())
 idf = ort.compute_idf(inv_idx, n_docs)
 doc_norms = ort.compute_doc_norms(inv_idx, idf, n_docs, job_idx_map)
 
-skillsTrainingCsvPath = os.path.join("/helpers/querySkillsTraining.csv")
-skillsTrainingCsvPath2 = os.path.join("/helpers/querySkillsTraining2.csv")
+skillsTrainingCsvPath = "/helpers/querySkillsTraining.csv"
+skillsTrainingCsvPath2 = "/helpers/querySkillsTraining2.csv"
 queryHandler = QueryHandler()
 queryHandler.load_csv_training_data(skillsTrainingCsvPath)
 queryHandler.trainCNN()
