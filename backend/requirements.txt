@@ -26,3 +26,4 @@ nltk
 numpy
 ipython
 spacy
+gensim

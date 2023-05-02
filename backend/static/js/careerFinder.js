@@ -122,7 +122,7 @@ function generateCards(data, cardsToDisplay = 8) {
 
 function search() {
     // set loading view
-
+    cardGrid.innerHTML = '';
     // get the text
     let text = document.getElementById("search-box").value;
     console.log(text);

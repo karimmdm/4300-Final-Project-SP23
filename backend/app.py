@@ -65,10 +65,10 @@ idf = ort.compute_idf(inv_idx, n_docs)
 doc_norms = ort.compute_doc_norms(inv_idx, idf, n_docs, job_idx_map)
 
 skillsTrainingCsvPath = os.path.join(os.environ['ROOT_PATH'], "backend/helpers/querySkillsTraining.csv")
+skillsTrainingCsvPath2 = os.path.join(os.environ['ROOT_PATH'], "backend/helpers/querySkillsTraining2.csv")
 queryHandler = QueryHandler()
 queryHandler.load_csv_training_data(skillsTrainingCsvPath)
-queryHandler.train()
-print(queryHandler.query("I like programming"))
+queryHandler.trainCNN()
 
 @app.route("/")
 def home():
@@ -77,7 +77,8 @@ def home():
 @app.route("/search")
 def career_search():
     text = request.args.get("interest")
-    result = ort.top10_results(text, jobs, inv_idx, idf, doc_norms, job_idx_map)
+    newText = queryHandler.query(text)
+    result = ort.top10_results(newText, jobs, inv_idx, idf, doc_norms, job_idx_map)
     print(result)
     return result
 
