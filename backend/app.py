@@ -39,7 +39,7 @@ os.environ['ROOT_PATH'] = os.path.abspath(os.path.join("..",os.curdir))
 app = Flask(__name__)
 CORS(app)
 
-TEST = True
+TEST = False
 
 def get_data(download=True):
     raw_data_dir = "./helpers/raw_data/"
@@ -87,6 +87,5 @@ def career_search():
     return result
 
 if TEST:
-    print("hi")
     app.run(debug=True)
 
