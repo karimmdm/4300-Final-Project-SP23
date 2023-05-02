@@ -204,7 +204,10 @@ def dot_scores(query_word_counts, inv_idx, idf):
             continue
 
         for job_id, score in career_tups:
-            doc_scores[job_id] = freq * score
+            try:
+                doc_scores[job_id] += freq * score
+            except:
+                doc_scores[job_id] = freq * score
         
     return doc_scores
 

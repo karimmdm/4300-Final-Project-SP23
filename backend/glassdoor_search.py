@@ -20,6 +20,10 @@ def match_job_title(job_title):
         #     job_words[i] = job_words[i][:-9]
         # if job_words[i][-10:] == 'ician':
         #     job_words[i] = job_words[i][:-5]
+    if 'and' in job_words:
+        job_words.remove('and')
+    if 'the' in job_words:
+        job_words.remove('the')
 
     # replace firm dashes with spaces
     reviews['firm'] = reviews['firm'].str.replace('-', ' ')
