@@ -240,7 +240,8 @@ def index_search(query, index, idf, doc_norms, job_idx_map, score_func=dot_score
     Note: 
         
     """
-    q = tokenizer.tokenize(query)
+    # q = tokenizer.tokenize(query)
+    q = query.split(";")
     q_counts = Counter(q)
     doc_scores = score_func(q_counts, index, idf)
 
@@ -278,9 +279,9 @@ def np_encoder(object):
     
 def top10_results(query, jobs, inv_idx, idf, doc_norms, job_idx_map):
 
-    print("#" * len(query))
+    print("#" * 10)
     print(query)
-    print("#" * len(query))
+    print("#" * 10)
 
     results = index_search(query, inv_idx, idf, doc_norms, job_idx_map)
     count = 0
