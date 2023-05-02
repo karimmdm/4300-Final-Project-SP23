@@ -1,6 +1,6 @@
 const cardGrid = document.getElementById('card-grid');
 
-var color = d3.scale.ordinal().range(["#CC333F","#00A0B0"]);
+var color = d3.scale.ordinal().range(["#0047AB", "#CC333F","#00A0B0"]);
 
 var radarChartOptions = {
     w: '300',
@@ -79,14 +79,13 @@ function drawSpiderChart(cardEltId, data) {
 const CareerCard = (eltId, occupationText, firm, reviewScore, reviewText) => {
     if(firm != "No Match") {
         return ` 
-
             <div class="w-full drop-shadow-lg">
                 <h1 style="text-align: center; margin-left: 50px;" class="w-full h-full centered"><b>${occupationText}</b></h1>
 
                 <div class="${eltId}" id="${eltId}"></div>
 
-                <h2 class="w-full h-full">${firm} (${reviewScore}/5)</h2>
-                <p class="w-full h-full">${reviewText}</p>
+                <h2 class="w-full h-full" style="text-align: center; margin-left: 50px;">${firm} (${reviewScore}/5)</h2>
+                <p class="w-full h-full" style="text-align: center; margin-left: 50px;">${reviewText}</p>
             </div>`;
     } else {
         return ` 
